@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import './globals.css'
+import { supabase } from './lib/supabase'
+import type { User } from '@supabase/supabase-js'
 
 const navItems = [
   {
@@ -35,7 +37,33 @@ const navItems = [
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
+  // Don't render sidebar on login page
+  if (pathname === '/login') {
+    return (
+      <html lang="en">
+        <body style={{ margin: 0, fontFamily: 'Inter, system-ui, sans-serif' }}>
+          {children}
+        </body>
+      </html>
+    )
+  }
 
   return (
     <html lang="en">
@@ -68,7 +96,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
 
             {/* Nav */}
-            <nav style={{ padding: '8px 6px', flex: 1 }}>
+            <nav style={{ padding: '8px 6px', flex: 1, overflowY: 'auto' }}>
               {navItems.map(group => (
                 <div key={group.group}>
                   {!collapsed && (
@@ -101,6 +129,47 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </div>
               ))}
             </nav>
+            {/* User + Sign out */}
+            <div style={{
+              borderTop: '0.5px solid rgba(255,255,255,0.07)',
+              padding: '10px 6px',
+              marginTop: 4,
+            }}>
+              {user && !collapsed && (
+                <div style={{ marginBottom: 6, padding: '0 4px' }}>
+                  <div style={{ fontSize: 11, color: '#fff', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                  </div>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {user.email}
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={handleSignOut}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  padding: '6px 8px',
+                  borderRadius: 6,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  color: 'rgba(255,255,255,0.35)',
+                  justifyContent: collapsed ? 'center' : 'flex-start',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#ef4444')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
+              >
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                {!collapsed && <span>Sign out</span>}
+              </button>
+            </div>
           </aside>
 
           {/* Main content */}
