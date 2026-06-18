@@ -32,7 +32,7 @@ function typeLabel(ct: ContentType) { return CONTENT_TYPES.find(t => t.value ===
 const VARS = ['{service}', '{city}', '{state}', '{company}']
 
 function VarChips({ inputRef, value, onChange }: {
-  inputRef: React.RefObject<HTMLInputElement>
+  inputRef: React.RefObject<HTMLInputElement | null>
   value: string
   onChange: (val: string) => void
 }) {
