@@ -120,8 +120,13 @@ Return ONLY raw HTML starting with the first meta tag <p> line.${contextBlock}`
 
 Write at a grade 9 reading level or below.
 Use clear, direct language.
-Keep sentences short.
+Keep sentences short. One idea per sentence. Never write long, run-on sentences.
 Use active voice.
+
+PARAGRAPH LENGTH — this is a hard rule:
+- Every paragraph must be 5 lines or fewer when rendered on a page.
+- If a thought needs more than 5 lines, split it into two paragraphs.
+- Short paragraphs are always correct. Long paragraphs are always wrong.
 Speak to the reader as "you" and "your."
 Give practical, specific advice.
 Include data or examples when useful.
