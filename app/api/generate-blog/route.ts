@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   } = await req.json()
 
   const internalLinksBlock = internalLinks && internalLinks.length > 0
-    ? `\n\n--- INTERNAL LINKS ---\nWhere relevant and natural, embed up to 5 internal links within the blog body using HTML anchor tags: <a href="URL">anchor text</a>. Anchor text must describe the destination page — use the meta title as a guide if provided. Do not force links where they don't fit. Do not link the same URL more than once. Maximum 5 links total.\n${internalLinks.map(l => `- ${l.url}${l.meta_title ? ` (${l.meta_title})` : ''}`).join('\n')}\n--- END INTERNAL LINKS ---`
+    ? `\n\n--- INTERNAL LINKS ---\nWhere relevant and natural, embed up to 5 internal links within the blog body using HTML anchor tags: <a href="URL">anchor text</a>.\n\nANCHOR TEXT RULES — these are strict:\n- Use 2 to 5 words maximum. Never use the full page title as anchor text.\n- The anchor text must read as a natural phrase within the sentence — as if the link were not there.\n- WRONG: "visit the <a href="...">Insulation Services in Minnesota | Northland Companies</a> page"\n- WRONG: "read our <a href="...">What is Batt Insulation: Your Guide to Home Energy Efficiency</a> guide"\n- RIGHT: "a <a href="...">tabletop grow-light system</a> works well for small spaces"\n- RIGHT: "consider <a href="...">spray foam insulation</a> for better air sealing"\n- The link must fit the sentence. Do not add a sentence just to insert a link. Do not force links where they don't fit naturally.\n- Do not link the same URL more than once. Maximum 5 links total.\n\n${internalLinks.map(l => `- ${l.url}${l.meta_title ? ` (${l.meta_title})` : ''}`).join('\n')}\n--- END INTERNAL LINKS ---`
     : ''
 
   const contextBlock = [
