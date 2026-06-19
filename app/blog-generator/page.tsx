@@ -140,8 +140,9 @@ export default function BlogGeneratorPage() {
   const [editVals,      setEditVals]      = useState({ keyword: '', blog_title: '', blog_month: '' })
   const [copied,        setCopied]        = useState<number | null>(null)
 
-  const stopRef = useRef(false)
-  const csvRef  = useRef<HTMLInputElement>(null)
+  const stopRef        = useRef(false)
+  const csvRef         = useRef<HTMLInputElement>(null)
+  const generatingRef  = useRef<Set<number>>(new Set())
 
   // No-links confirmation modal
   const [noLinksModal, setNoLinksModal] = useState<{
@@ -254,7 +255,9 @@ export default function BlogGeneratorPage() {
   // ── Generate one post ─────────────────────────────────────────────────────
 
   async function generatePost(post: BlogPost): Promise<'done' | 'error'> {
-    setGenerating(s => new Set(s).add(post.id))
+    if (generatingRef.current.has(post.id)) return 'done'
+    generatingRef.current.add(post.id)
+    setGenerating(new Set(generatingRef.current))
     setPosts(ps => ps.map(p => p.id === post.id ? { ...p, status: 'generating' as BlogStatus, error_msg: null } : p))
     await supabase.from('blog_posts').update({ status: 'generating', error_msg: null }).eq('id', post.id)
 
@@ -384,7 +387,8 @@ export default function BlogGeneratorPage() {
       setPosts(ps => ps.map(p => p.id === post.id ? { ...p, status: 'error', error_msg: msg } : p))
       return 'error'
     } finally {
-      setGenerating(s => { const n = new Set(s); n.delete(post.id); return n })
+      generatingRef.current.delete(post.id)
+      setGenerating(new Set(generatingRef.current))
     }
   }
 
