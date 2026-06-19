@@ -52,7 +52,9 @@ async function fetchGdocText(url: string): Promise<string> {
 }
 
 function toEditUrl(url: string): string {
-  return url.replace(/\/view(\?|$)/, '/edit$1')
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/)
+  if (match) return `https://docs.google.com/document/d/${match[1]}/edit?usp=sharing`
+  return url
 }
 
 // ── Client dropdown ────────────────────────────────────────────────────────────
