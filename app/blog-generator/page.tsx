@@ -140,6 +140,8 @@ export default function BlogGeneratorPage() {
   const [editVals,      setEditVals]      = useState({ keyword: '', blog_title: '', blog_month: '' })
   const [copied,        setCopied]        = useState<number | null>(null)
 
+  const [selectedIds,   setSelectedIds]   = useState<Set<number>>(new Set())
+
   const stopRef        = useRef(false)
   const csvRef         = useRef<HTMLInputElement>(null)
   const generatingRef  = useRef<Set<number>>(new Set())
@@ -469,6 +471,14 @@ export default function BlogGeneratorPage() {
   async function deleteRow(id: number) {
     await supabase.from('blog_posts').delete().eq('id', id)
     setPosts(ps => ps.filter(p => p.id !== id))
+    setSelectedIds(s => { const n = new Set(s); n.delete(id); return n })
+  }
+
+  async function deleteSelected() {
+    const ids = [...selectedIds]
+    await supabase.from('blog_posts').delete().in('id', ids)
+    setPosts(ps => ps.filter(p => !selectedIds.has(p.id)))
+    setSelectedIds(new Set())
   }
 
   // ── Copy editor link ──────────────────────────────────────────────────────
@@ -613,6 +623,17 @@ export default function BlogGeneratorPage() {
 
         <div className="flex-1" />
 
+        {selectedIds.size > 0 && (
+          <button
+            onClick={deleteSelected}
+            className="flex items-center gap-1.5 text-xs px-3 h-8 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-colors font-medium">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete selected ({selectedIds.size})
+          </button>
+        )}
+
         {generatingAll && (
           <button
             onClick={() => { stopRef.current = true; setGeneratingAll(false) }}
@@ -650,6 +671,15 @@ export default function BlogGeneratorPage() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/80">
+                <th className="px-4 py-2.5 w-8">
+                  <input type="checkbox"
+                    className="rounded border-gray-300 cursor-pointer"
+                    checked={filteredPosts.length > 0 && filteredPosts.every(p => selectedIds.has(p.id))}
+                    onChange={e => {
+                      if (e.target.checked) setSelectedIds(new Set(filteredPosts.map(p => p.id)))
+                      else setSelectedIds(new Set())
+                    }} />
+                </th>
                 <th className="text-left px-4 py-2.5 text-gray-400 font-medium w-36">Client</th>
                 <th className="text-left px-4 py-2.5 text-gray-400 font-medium w-40">Keyword</th>
                 <th className="text-left px-4 py-2.5 text-gray-400 font-medium">Blog Title</th>
@@ -664,7 +694,19 @@ export default function BlogGeneratorPage() {
                 const isGen = generating.has(post.id)
                 return (
                   <tr key={post.id}
-                    className={`border-b border-gray-50 transition-colors hover:bg-blue-50/20 ${i % 2 === 1 ? 'bg-gray-50/40' : ''}`}>
+                    className={`border-b border-gray-50 transition-colors hover:bg-blue-50/20 ${i % 2 === 1 ? 'bg-gray-50/40' : ''} ${selectedIds.has(post.id) ? 'bg-red-50/30' : ''}`}>
+
+                    {/* Checkbox */}
+                    <td className="px-4 py-3">
+                      <input type="checkbox"
+                        className="rounded border-gray-300 cursor-pointer"
+                        checked={selectedIds.has(post.id)}
+                        onChange={e => setSelectedIds(s => {
+                          const n = new Set(s)
+                          e.target.checked ? n.add(post.id) : n.delete(post.id)
+                          return n
+                        })} />
+                    </td>
 
                     {/* Client */}
                     <td className="px-4 py-3 font-medium text-gray-700 whitespace-nowrap">{post.client_name}</td>
